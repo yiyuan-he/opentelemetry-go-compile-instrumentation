@@ -13,9 +13,13 @@ import (
 	"time"
 	_ "unsafe"
 
-	_ "github.com/open-telemetry/opentelemetry-go-compile-instrumentation/sdk"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/open-telemetry/opentelemetry-go-compile-instrumentation/sdk"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
+
+// Global S3 client for use in s3buckets.go
+var s3Client *s3.Client
 
 func main() {
 	if err := run(); err != nil {
@@ -30,6 +34,13 @@ func run() (err error) {
 
 	// The OpenTelemetry setup is handled by the injected hook code
 	fmt.Println("Starting HTTP server with OpenTelemetry instrumentation...")
+	
+	// Initialize S3 client
+	s3Client, err = sdk.GetS3Client()
+	if err != nil {
+		fmt.Printf("Error setting up S3 client: %v\n", err)
+		// Continue even if S3 setup fails
+	}
 
 	// Start HTTP server
 	srv := &http.Server{
