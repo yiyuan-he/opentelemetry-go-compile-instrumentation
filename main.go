@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -44,10 +45,30 @@ func isCompilePackage(args []string, pkg string) bool {
 
 func main() {
 	args := os.Args[1:]
+	
+	// Check if we're running in initialization mode
+	if len(args) > 0 && args[0] == "init" {
+		if len(args) < 2 {
+			fmt.Println("Usage: otel init <target-directory>")
+			os.Exit(1)
+		}
+		targetDir := args[1]
+		
+		// Ensure project has necessary imports
+		if err := internal.EnsureInstrumentationImports(targetDir); err != nil {
+			panic("failed to initialize instrumentation: " + err.Error())
+		}
+		
+		fmt.Println("Instrumentation initialized successfully")
+		return
+	}
+	
+	// Normal instrumentation mode
 	if isCompilePackage(args, internal.TargetPkg) {
 		// It's the compile command, intercept it and inject hook code
 		args = internal.Instrument(args)
 	}
+	
 	err := runCmd(args...)
 	if err != nil {
 		panic("failed to run command: " + err.Error())
