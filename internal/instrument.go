@@ -20,7 +20,19 @@ const (
 	TargetFunc     = "main"
 	TrampolineName = "Trampoline"
 	HookName       = "Hook"
+	AWSHookName    = "AWSSDKHook"
 )
+
+func hasAWSSDKImport(file *dst.File) bool {
+    for _, imp := range file.Imports {
+        importPath := imp.Path.Value
+        if strings.Contains(importPath, "aws-sdk-go-v2") {
+            fmt.Printf("Found AWS SDK import: %s\n", importPath)
+            return true
+        }
+    }
+    return false
+}
 
 func loadAst(filePath string) *dst.File {
 	name := filepath.Base(filePath)
@@ -111,6 +123,15 @@ func rewriteAst(ast *dst.File, fn *dst.FuncDecl) {
 	// Add the hook function to the AST
 	hook := newHookFunc(HookName)
 	ast.Decls = append(ast.Decls, hook)
+	// Check if the file uses AWS SDK and add the AWS hook if it does
+    if hasAWSSDKImport(ast) {
+        // Add the AWS SDK hook function
+        awsHook := newHookFunc(AWSHookName)
+        ast.Decls = append(ast.Decls, awsHook)
+        // Insert AWS SDK hook call after the main hook
+        callToAWSHook := newFuncCall(AWSHookName)
+        fn.Body.List = append([]dst.Stmt{callToAWSHook}, fn.Body.List[1:]...)
+    }
 }
 
 func Instrument(args []string) []string {
