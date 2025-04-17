@@ -13,7 +13,9 @@ import (
 	_ "github.com/open-telemetry/opentelemetry-go-compile-instrumentation/sdk"
 )
 
-func listBuckets() {
+func main() {
+	fmt.Printf("Hello World\n")
+	fmt.Println("Starting AWS SDK demo")
 	// Load AWS SDK configuration
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -34,10 +36,4 @@ func listBuckets() {
 	for _, bucket := range result.Buckets {
 		fmt.Println(*bucket.Name)
 	}
-}
-
-func main() {
-	fmt.Printf("Hello World\n")
-	fmt.Println("Starting AWS SDK demo")
-	listBuckets()
 }
